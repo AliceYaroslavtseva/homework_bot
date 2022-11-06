@@ -25,16 +25,17 @@ HOMEWORK_STATUSES = {
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
 
-updater = Updater(token = TELEGRAM_TOKEN)
+updater = Updater(token=TELEGRAM_TOKEN)
 
 logging.basicConfig(
     level=logging.INFO,
-    filename='program.log', 
+    filename='program.log',
     format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
 )
 
 
 def send_message(bot, message):
+
     bot = Bot(token=f'{TELEGRAM_TOKEN}')
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
@@ -44,6 +45,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
+
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     response = requests.get(ENDPOINT, headers=HEADERS, params=params)
@@ -55,6 +57,7 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
+
     if not isinstance(response, dict):
         logging.info('Функция get_api_answer')
         raise TypeError('Ошибка! Параметр не приведен к типу данных Python')
@@ -62,6 +65,7 @@ def check_response(response):
 
 
 def parse_status(homework):
+
     if not isinstance(homework, dict):
         logging.exception('Ошибка! типа данных в homework')
         raise KeyError('Ошибка! типа данных в homework')
@@ -71,7 +75,7 @@ def parse_status(homework):
 
     if homework_status not in HOMEWORK_STATUSES.keys():
         logging.exception('Обнаружен недокументированный статус домашней '
-                         'работы в ответе API.')
+                          'работы в ответе API.')
         raise KeyError('Обнаружен недокументированный статус домашней работы '
                        'в ответе API.')
 
@@ -81,6 +85,7 @@ def parse_status(homework):
 
 
 def check_tokens():
+
     tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
     if all(tokens):
         return True
@@ -89,6 +94,7 @@ def check_tokens():
 
 
 def main():
+
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time() - PAYLOAD)
     previous_request = ''
