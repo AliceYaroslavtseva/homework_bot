@@ -59,8 +59,7 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """"Функция check_response проверяет ответ API на корректность.
-    """
+    """Функция check_response проверяет ответ API на корректность."""
     if not isinstance(response, dict):
         logging.info('Функция get_api_answer')
         raise TypeError('Ошибка! Параметр не приведен к типу данных Python')
@@ -68,7 +67,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """Функция parse_status извлекает из информации о. 
+    """Функция parse_status извлекает из информации о.
     конкретной домашней работе статус этой работы.
     """
     if not isinstance(homework, dict):
@@ -90,8 +89,7 @@ def parse_status(homework):
 
 
 def check_tokens():
-    """Функция check_tokens роверяет доступность переменных окружения.
-    """
+    """Функция check_tokens роверяет доступность переменных окружения."""
     tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
     if all(tokens):
         return True
