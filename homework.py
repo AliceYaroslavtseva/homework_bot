@@ -35,7 +35,7 @@ logging.basicConfig(
 
 
 def send_message(bot, message):
-    """Функция send_message() отправляет сообщение в Telegram чат"""
+    """Функция send_message отправляет сообщение в Telegram чат."""
     bot = Bot(token=f'{TELEGRAM_TOKEN}')
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
@@ -45,7 +45,9 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
-    """Функция get_api_answer() делает запрос к единственному эндпоинту API-сервиса."""
+    """Функция get_api_answer делает запрос.
+    к единственному эндпоинту API-сервиса.
+    """
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     response = requests.get(ENDPOINT, headers=HEADERS, params=params)
@@ -57,7 +59,8 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """"Функция check_response() проверяет ответ API на корректность"""
+    """"Функция check_response проверяет ответ API на корректность.
+    """
     if not isinstance(response, dict):
         logging.info('Функция get_api_answer')
         raise TypeError('Ошибка! Параметр не приведен к типу данных Python')
@@ -65,8 +68,9 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """Функция parse_status извлекает из информации о 
-    конкретной домашней работе статус этой работы."""
+    """Функция parse_status извлекает из информации о. 
+    конкретной домашней работе статус этой работы.
+    """
     if not isinstance(homework, dict):
         logging.exception('Ошибка! типа данных в homework')
         raise KeyError('Ошибка! типа данных в homework')
@@ -86,8 +90,8 @@ def parse_status(homework):
 
 
 def check_tokens():
-    """Функция check_tokens роверяет доступность переменных окружения,
-    которые необходимы для работы программы."""
+    """Функция check_tokens роверяет доступность переменных окружения.
+    """
     tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
     if all(tokens):
         return True
@@ -96,12 +100,13 @@ def check_tokens():
 
 
 def main():
-    """"Функция main писывает основную логика работы программы.
+    """Функция main писывает основную логика работы программы.
     - Сделает запрос к API.
     - Проверяет ответ.
     - Если есть обновления — получить статус работы из обновления
     и отправить сообщение в Telegram.
-    - Ждёт 10 мин и делает новый запрос."""
+    - Ждёт 10 мин и делает новый запрос.
+    """
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time() - PAYLOAD)
     previous_request = ''
