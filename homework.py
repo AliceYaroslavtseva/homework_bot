@@ -4,7 +4,6 @@ import logging
 import time
 from http import HTTPStatus
 from telegram import Bot
-from telegram.ext import Updater
 from dotenv import load_dotenv
 import requests
 
@@ -25,8 +24,6 @@ HOMEWORK_STATUSES = {
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
 
-updater = Updater(token=TELEGRAM_TOKEN)
-
 logging.basicConfig(
     level=logging.INFO,
     filename='program.log',
@@ -36,7 +33,7 @@ logging.basicConfig(
 
 def send_message(bot, message):
     """Функция send_message отправляет сообщение в Telegram чат."""
-    bot = Bot(token=f'{TELEGRAM_TOKEN}')
+    bot = Bot(token=TELEGRAM_TOKEN)
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logging.info('Сообщение отправлено')
