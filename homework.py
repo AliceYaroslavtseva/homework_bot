@@ -2,10 +2,12 @@ import os
 import telegram
 import logging
 import time
+import sys
+import requests
 from http import HTTPStatus
 from telegram import Bot
 from dotenv import load_dotenv
-import requests
+from exceptions import SendMessageError, APIResponsError, ParameterNotTypeError, NoKeyError
 
 load_dotenv()
 
@@ -36,30 +38,35 @@ def send_message(bot, message):
     bot = Bot(token=TELEGRAM_TOKEN)
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
+    except: SendMessageError
+    else:
         logging.info('Сообщение отправлено')
-    except Exception as error:
-        logging.error(f'Сообщение НЕ отправлено: {error}')
+
 
 
 def get_api_answer(current_timestamp):
     """Функция get_api_answer делает запрос.
     к единственному эндпоинту API-сервиса.
     """
-    timestamp = current_timestamp or int(time.time())
-    params = {'from_date': timestamp}
-    response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+    requests_params = dict(url= ENDPOINT, headers= HEADERS, params={'from_date': current_timestamp})
+    response = requests.get(**requests_params)
     logging.info('Функция get_api_answer')
     if response.status_code != HTTPStatus.OK:
-        logging.exception('Ошибка! API возвращает код, отличный от 200')
-        raise TypeError(msg='Ошибка! API возвращает код, не 200.')
+        raise APIResponsError
     return response.json()
 
 
 def check_response(response):
     """Функция check_response проверяет ответ API на корректность."""
+    logging.info('Функция check_response')
+    if not response['current_date']:
+        raise NoKeyError('Ошибка, в словаре нет ключа')
+    
+    if not response['homeworks']:
+        raise NoKeyError('Ошибка, в словаре нет ключа')
+
     if not isinstance(response, dict):
-        logging.info('Функция get_api_answer')
-        raise TypeError('Ошибка! Параметр не приведен к типу данных Python')
+        raise ParameterNotTypeError('Ошибка типа данных в response')
     return response.get('homeworks')[0]
 
 
@@ -68,8 +75,13 @@ def parse_status(homework):
     конкретной домашней работе статус этой работы.
     """
     if not isinstance(homework, dict):
-        logging.exception('Ошибка! типа данных в homework')
-        raise KeyError('Ошибка! типа данных в homework')
+        raise KeyError('Ошибка типа данных в homework')
+
+    if not homework['status']:
+        raise NoKeyError('Ошибка, в словаре нет ключа')
+    
+    if not homework['homework_name']:
+        raise NoKeyError('Ошибка, в словаре нет ключа')
 
     homework_name = homework['homework_name']
     homework_status = homework['status']
@@ -88,10 +100,7 @@ def parse_status(homework):
 def check_tokens():
     """Функция check_tokens роверяет доступность переменных окружения."""
     tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
-    if all(tokens):
-        return True
-    else:
-        return False
+    return all(tokens)
 
 
 def main():
@@ -102,22 +111,32 @@ def main():
     и отправить сообщение в Telegram.
     - Ждёт 10 мин и делает новый запрос.
     """
+    if check_tokens() is False:
+        logging.critical('НЕТ переменной окружения')
+        sys.exit
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time() - PAYLOAD)
     previous_request = ''
     while True:
         try:
-            check_tokens()
             response = get_api_answer(current_timestamp)
             checked_response = check_response(response)
             parsed_status = parse_status(checked_response)
             if parsed_status != previous_request:
                 send_message(bot, parsed_status)
                 previous_request = parsed_status
-        except Exception as error:
-            message = f'Сбой в работе: {error}'
-            send_message(bot, message)
-            logging.exception('Ошибка!')
+        except SendMessageError:
+            message_SendMessage = f'Ошибка в отправке сообщения.'
+            send_message(bot, message_SendMessage)
+            logging.error(message_SendMessage)
+        except APIResponsError:
+            message_APIRespons = f'Ошибка,статус отличный от 200.'
+            get_api_answer(bot, message_APIRespons)
+            logging.error(message_APIRespons)
+        except ParameterNotTypeError:
+            message_ParameterNotType = f'Ошибка,не приведено к типу данных Python.'
+            check_response(response)
+            logging.error(message_ParameterNotType)
         finally:
             time.sleep(RETRY_TIME)
 
