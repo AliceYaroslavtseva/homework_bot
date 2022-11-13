@@ -1,13 +1,16 @@
-import os
-import telegram
 import logging
-import time
+import os
 import sys
-import requests
+import time
 from http import HTTPStatus
-from telegram import Bot
+
+import requests
+import telegram
 from dotenv import load_dotenv
-from exceptions import SendMessageError, APIResponsError, ParameterNotTypeError, NoKeyError
+from telegram import Bot
+
+from exceptions import (APIResponsError, NoKeyError, ParameterNotTypeError,
+                        SendMessageError)
 
 load_dotenv()
 
@@ -38,17 +41,19 @@ def send_message(bot, message):
     bot = Bot(token=TELEGRAM_TOKEN)
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
-    except: SendMessageError
+    except SendMessageError:
+        print('Ошибка, в отправке сообщения')
     else:
         logging.info('Сообщение отправлено')
-
 
 
 def get_api_answer(current_timestamp):
     """Функция get_api_answer делает запрос.
     к единственному эндпоинту API-сервиса.
     """
-    requests_params = dict(url= ENDPOINT, headers= HEADERS, params={'from_date': current_timestamp})
+    requests_params = dict(url=ENDPOINT,
+                           headers=HEADERS,
+                           params={'from_date': current_timestamp})
     response = requests.get(**requests_params)
     logging.info('Функция get_api_answer')
     if response.status_code != HTTPStatus.OK:
@@ -61,7 +66,7 @@ def check_response(response):
     logging.info('Функция check_response')
     if not response['current_date']:
         raise NoKeyError('Ошибка, в словаре нет ключа')
-    
+
     if not response['homeworks']:
         raise NoKeyError('Ошибка, в словаре нет ключа')
 
@@ -79,7 +84,7 @@ def parse_status(homework):
 
     if not homework['status']:
         raise NoKeyError('Ошибка, в словаре нет ключа')
-    
+
     if not homework['homework_name']:
         raise NoKeyError('Ошибка, в словаре нет ключа')
 
@@ -126,17 +131,19 @@ def main():
                 send_message(bot, parsed_status)
                 previous_request = parsed_status
         except SendMessageError:
-            message_SendMessage = f'Ошибка в отправке сообщения.'
-            send_message(bot, message_SendMessage)
-            logging.error(message_SendMessage)
+            message_sendmessage = 'Ошибка в отправке сообщения.'
+            send_message(bot, message_sendmessage)
+            logging.error(message_sendmessage)
         except APIResponsError:
-            message_APIRespons = f'Ошибка,статус отличный от 200.'
-            get_api_answer(bot, message_APIRespons)
-            logging.error(message_APIRespons)
+            message_apirespons = 'Ошибка,статус отличный от 200.'
+            get_api_answer(bot, message_apirespons)
+            logging.error(message_apirespons)
         except ParameterNotTypeError:
-            message_ParameterNotType = f'Ошибка,не приведено к типу данных Python.'
+            message_parameternottype = ('Ошибка, '
+                                        'не приведено к'
+                                        'типу данных Python.')
             check_response(response)
-            logging.error(message_ParameterNotType)
+            logging.error(message_parameternottype)
         finally:
             time.sleep(RETRY_TIME)
 
