@@ -41,8 +41,8 @@ def send_message(bot, message):
     bot = Bot(token=TELEGRAM_TOKEN)
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
-    except SendMessageError:
-        print('Ошибка, в отправке сообщения')
+    except SendMessageError as e:
+        raise (f'Ошибка в отправке сообщения: {e}')
     else:
         logging.info('Сообщение отправлено')
 
@@ -54,24 +54,38 @@ def get_api_answer(current_timestamp):
     requests_params = dict(url=ENDPOINT,
                            headers=HEADERS,
                            params={'from_date': current_timestamp})
+    
+    if not isinstance(requests_params, dict):
+        raise ParameterNotTypeError(f'Ошибка типа данных в requests_params:'
+                                    f'Type(requests_params)')
+
+    if ('url' not in requests_params) or ('headers' not in requests_params) or ('params' not in requests_params):
+        raise NoKeyError(f'Ошибка, в словаре requests_params '
+                         f'нет ключа')
+
     response = requests.get(**requests_params)
+
     logging.info('Функция get_api_answer')
     if response.status_code != HTTPStatus.OK:
-        raise APIResponsError
+        raise APIResponsError(f'Ошибка, возвращаемый статус не 200'
+                              f'requests_params = {requests_params};'
+                              f'http_code = {response.status_code};'
+                              f'reason = {response.reason};'
+                              f'content = {response.text}')
     return response.json()
 
 
 def check_response(response):
     """Функция check_response проверяет ответ API на корректность."""
     logging.info('Функция check_response')
-    if not response['current_date']:
-        raise NoKeyError('Ошибка, в словаре нет ключа')
-
-    if not response['homeworks']:
-        raise NoKeyError('Ошибка, в словаре нет ключа')
-
     if not isinstance(response, dict):
-        raise ParameterNotTypeError('Ошибка типа данных в response')
+        raise ParameterNotTypeError(f'Ошибка типа данных в response:'
+                                    f'{type(response)}')
+
+    if ('homeworks' not in response) or ('current_date' not in response):
+        raise NoKeyError(f'Ошибка, в словаре response '
+                         f'нет ключа')
+
     return response.get('homeworks')[0]
 
 
@@ -80,21 +94,24 @@ def parse_status(homework):
     конкретной домашней работе статус этой работы.
     """
     if not isinstance(homework, dict):
-        raise KeyError('Ошибка типа данных в homework')
+        raise ParameterNotTypeError(f'Ошибка типа данных в response:'
+                                    f'{type(homework)}')
 
-    if not homework['status']:
-        raise NoKeyError('Ошибка, в словаре нет ключа')
-
-    if not homework['homework_name']:
-        raise NoKeyError('Ошибка, в словаре нет ключа')
+    if ('status' not in homework) or ('homework_name' not in homework):
+        raise NoKeyError(f'Ошибка, в словаре homework '
+                         f'нет ключа')
 
     homework_name = homework['homework_name']
     homework_status = homework['status']
 
+    if ('status' not in homework) or ('homework_name' not in homework):
+        raise NoKeyError(f'Ошибка, в словаре homework '
+                         f'нет ключа')
+
     if homework_status not in HOMEWORK_STATUSES.keys():
         logging.exception('Обнаружен недокументированный статус домашней '
                           'работы в ответе API.')
-        raise KeyError('Обнаружен недокументированный статус домашней работы '
+        raise NoKeyError('Обнаружен недокументированный статус домашней работы '
                        'в ответе API.')
 
     verdict = HOMEWORK_STATUSES[homework_status]
