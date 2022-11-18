@@ -54,14 +54,16 @@ def get_api_answer(current_timestamp):
     requests_params = dict(url=ENDPOINT,
                            headers=HEADERS,
                            params={'from_date': current_timestamp})
-    
+
     if not isinstance(requests_params, dict):
         raise ParameterNotTypeError(f'Ошибка типа данных в requests_params:'
-                                    f'Type(requests_params)')
+                                    f'{type(requests_params)}')
 
-    if ('url' not in requests_params) or ('headers' not in requests_params) or ('params' not in requests_params):
-        raise NoKeyError(f'Ошибка, в словаре requests_params '
-                         f'нет ключа')
+    if (('url' not in requests_params)
+            or ('headers' not in requests_params)
+            or ('params' not in requests_params)):
+        raise NoKeyError('Ошибка, в словаре requests_params '
+                         'нет ключа')
 
     response = requests.get(**requests_params)
 
@@ -79,12 +81,12 @@ def check_response(response):
     """Функция check_response проверяет ответ API на корректность."""
     logging.info('Функция check_response')
     if not isinstance(response, dict):
-        raise ParameterNotTypeError(f'Ошибка типа данных в response:'
-                                    f'{type(response)}')
+        raise TypeError(f'Ошибка типа данных в response:'
+                        f'{type(response)}')
 
     if ('homeworks' not in response) or ('current_date' not in response):
-        raise NoKeyError(f'Ошибка, в словаре response '
-                         f'нет ключа')
+        raise NoKeyError('Ошибка, в словаре response '
+                         'нет ключа')
 
     return response.get('homeworks')[0]
 
@@ -93,26 +95,27 @@ def parse_status(homework):
     """Функция parse_status извлекает из информации о.
     конкретной домашней работе статус этой работы.
     """
+    """По pytest здеcь почему-то обязателен KeyError"""
     if not isinstance(homework, dict):
-        raise ParameterNotTypeError(f'Ошибка типа данных в response:'
-                                    f'{type(homework)}')
+        raise KeyError(f'Ошибка типа данных в response:'
+                       f'{type(homework)}')
 
     if ('status' not in homework) or ('homework_name' not in homework):
-        raise NoKeyError(f'Ошибка, в словаре homework '
-                         f'нет ключа')
+        raise NoKeyError('Ошибка, в словаре homework '
+                         'нет ключа')
 
     homework_name = homework['homework_name']
     homework_status = homework['status']
 
     if ('status' not in homework) or ('homework_name' not in homework):
-        raise NoKeyError(f'Ошибка, в словаре homework '
-                         f'нет ключа')
+        raise NoKeyError('Ошибка, в словаре homework '
+                         'нет ключа')
 
     if homework_status not in HOMEWORK_STATUSES.keys():
         logging.exception('Обнаружен недокументированный статус домашней '
                           'работы в ответе API.')
-        raise NoKeyError('Обнаружен недокументированный статус домашней работы '
-                       'в ответе API.')
+        raise NoKeyError('Обнаружен недокументированный статус домашней'
+                         'работы в ответе API.')
 
     verdict = HOMEWORK_STATUSES[homework_status]
 
