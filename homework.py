@@ -51,30 +51,20 @@ def get_api_answer(current_timestamp):
     """Функция get_api_answer делает запрос.
     к единственному эндпоинту API-сервиса.
     """
-    requests_params = dict(url=ENDPOINT,
-                           headers=HEADERS,
-                           params={'from_date': current_timestamp})
-
-    if not isinstance(requests_params, dict):
-        raise ParameterNotTypeError(f'Ошибка типа данных в requests_params:'
-                                    f'{type(requests_params)}')
-
-    if (('url' not in requests_params)
-            or ('headers' not in requests_params)
-            or ('params' not in requests_params)):
-        raise NoKeyError('Ошибка, в словаре requests_params '
-                         'нет ключа')
-
-    response = requests.get(**requests_params)
-
-    logging.info('Функция get_api_answer')
-    if response.status_code != HTTPStatus.OK:
-        raise APIResponsError(f'Ошибка, возвращаемый статус не 200'
-                              f'requests_params = {requests_params};'
-                              f'http_code = {response.status_code};'
-                              f'reason = {response.reason};'
-                              f'content = {response.text}')
-    return response.json()
+    try:
+        requests_params = dict(url=ENDPOINT,
+                               headers=HEADERS,
+                               params={'from_date': current_timestamp})
+        response = requests.get(**requests_params)
+        if response.status_code != HTTPStatus.OK:
+            raise APIResponsError(f'Ошибка, возвращаемый статус не 200'
+                                  f'requests_params = {requests_params};'
+                                  f'http_code = {response.status_code};'
+                                  f'reason = {response.reason};'
+                                  f'content = {response.text}')
+        return response.json()
+    except Exception as e:
+        raise Exception(f'Ошибка запроса: {e}')
 
 
 def check_response(response):
@@ -101,20 +91,14 @@ def parse_status(homework):
                        f'{type(homework)}')
 
     if ('status' not in homework) or ('homework_name' not in homework):
-        raise NoKeyError('Ошибка, в словаре homework '
-                         'нет ключа')
+        raise KeyError(f'Ошибка, мы ожидали, что будут ключи status, '
+                       f'homework, а пришел вот это: {homework}!')
 
     homework_name = homework['homework_name']
     homework_status = homework['status']
 
-    if ('status' not in homework) or ('homework_name' not in homework):
-        raise NoKeyError('Ошибка, в словаре homework '
-                         'нет ключа')
-
     if homework_status not in HOMEWORK_STATUSES.keys():
-        logging.exception('Обнаружен недокументированный статус домашней '
-                          'работы в ответе API.')
-        raise NoKeyError('Обнаружен недокументированный статус домашней'
+        raise ValueError('Обнаружен недокументированный статус домашней'
                          'работы в ответе API.')
 
     verdict = HOMEWORK_STATUSES[homework_status]
@@ -164,6 +148,10 @@ def main():
                                         'типу данных Python.')
             check_response(response)
             logging.error(message_parameternottype)
+        except ValueError:
+            message_value = 'Ошибка значения.'
+            parse_status(bot, message_value)
+            logging.error(message_value)
         finally:
             time.sleep(RETRY_TIME)
 
