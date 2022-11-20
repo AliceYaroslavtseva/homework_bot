@@ -9,7 +9,7 @@ import telegram
 from dotenv import load_dotenv
 from telegram import Bot
 
-from exceptions import (APIResponsError, NoKeyError, ParameterNotTypeError,
+from exceptions import (APIResponsError, ParameterNotTypeError, ResponseError,
                         SendMessageError)
 
 load_dotenv()
@@ -63,8 +63,12 @@ def get_api_answer(current_timestamp):
                                   f'reason = {response.reason};'
                                   f'content = {response.text}')
         return response.json()
-    except Exception as e:
-        raise Exception(f'Ошибка запроса: {e}')
+    except ResponseError as e:
+        raise ResponseError(f'Ошибка запроса к эндпоинту: {e}'
+                            f'requests_params = {requests_params};'
+                            f'http_code = {response.status_code};'
+                            f'reason = {response.reason};'
+                            f'content = {response.text}')
 
 
 def check_response(response):
@@ -75,8 +79,8 @@ def check_response(response):
                         f'{type(response)}')
 
     if ('homeworks' not in response) or ('current_date' not in response):
-        raise NoKeyError('Ошибка, в словаре response '
-                         'нет ключа')
+        raise KeyError('Ошибка, в словаре response '
+                       'нет нужного ключа')
 
     return response.get('homeworks')[0]
 

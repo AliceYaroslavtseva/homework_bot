@@ -21,8 +21,8 @@ class ParameterNotTypeError(Exception):
     pass
 
 
-class  NoKeyError(Exception):
+class  ResponseError(Exception):
     """.
-    В словаре нет ключа.
+    Произошла ошибка при запросе.
     """
     pass
